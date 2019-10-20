@@ -8,7 +8,9 @@ export default class Main extends Component {
     };
 
     state = {
+        productInfo: {},
         docs: [],
+        page: 1,
     }
 
     componentDidMount() {
@@ -16,13 +18,27 @@ export default class Main extends Component {
     }
 
     // modelo para o this enxergar a função
-    loadProducts = async () => {
-        const response = await api.get('/products');
+    loadProducts = async (page = 1) => {
+        const response = await api.get(`/products?page=${page}`);
 
-        const { docs } = response.data;
+        const { docs, ...productInfo } = response.data;
 
-        this.setState({ docs });
+        this.setState({ 
+            docs: [...this.state.docs, ...docs], 
+            productInfo ,
+            page
+        });
     }
+
+    loadMore = () => {
+        const { page, productInfo } = this.state;
+
+        if (page === productInfo.page) return;
+
+        const pageNumber = page + 1;
+
+        this.loadProducts(pageNumber);
+    };
 
     renderItem = ({ item }) => (
         <View style={styles.productContainer}>
@@ -42,7 +58,10 @@ export default class Main extends Component {
                     contentContainerStyle={styles.list}
                     data={this.state.docs}
                     keyExtractor={item => item._id}
-                    renderItem={this.renderItem} />
+                    renderItem={this.renderItem}
+                    onEndReached={this.loadMore} 
+                    onEndReachedThreshold={0.1}
+                />
             </View>
         );
     }
